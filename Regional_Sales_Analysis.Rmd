@@ -1,0 +1,161 @@
+---
+title: "FPS Game Sales Based on Regions"
+output: html_notebook
+---
+Data file usage explaination:
+
+Data Resource:
+PS4_GamesSales.csv
+XboxOne_GameSales.csv
+Video_Games_Sales_as_at_22_Dec_2016.csv
+
+Market Total Sales:
+ps4_market_sales.csv
+xbox_market_sales.csv
+other_market_sales.csv
+
+Market Share:
+ps4_market_share.csv
+xbox_market_share.csv
+other_market_share.csv
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(tidyverse)
+
+# Load the Data
+ps4 = read_csv("PS4_GamesSales.csv")
+xbox = read_csv("XboxOne_GameSales.csv")
+videogame = read_csv("Video_Games_Sales_as_at_22_Dec_2016.csv")
+
+xbox = xbox[,-1]
+head(xbox)
+```
+
+
+```{r}
+# Applied filter to extract shooting genre
+ps4_shooting = ps4 %>% filter(Genre=="Shooter")
+write.table(ps4_shooting,"ps4_total_sales.csv",row.names=FALSE,col.names=TRUE,sep=",")
+
+xbox_shooting = xbox %>% filter(Genre=="Shooter")
+write.table(xbox_shooting,"xbox_total_sales.csv",row.names=FALSE,col.names=TRUE,sep=",")
+```
+
+Applied Microsoft Excel to adjust table format.
+
+```{r}
+# PS4 
+
+df1 = read_csv("ps4_market_share.csv")
+
+ggplot(df1,aes(factor(year),percent,fill=Region))+
+  geom_col(position = "dodge")+
+  xlab("Year")+
+  ylab("Market Share")+
+  ggtitle("FPS Game Sales in Different Region (PS4)")
+
+ggplot(df1,aes(year,percent,group=Region))+
+  geom_line(aes(color=Region))+
+  xlab("Year")+
+  ylab("Market Share")+
+  ggtitle("FPS Game Sales in Different Region (PS4)")
+```
+
+
+```{r}
+#Xbox
+
+df2 = read.csv("xbox_market_share.csv")
+
+ggplot(df2,aes(factor(year),percent,fill=Region))+
+  geom_col(position = "dodge")+
+  xlab("Year")+
+  ylab("Market Share")+
+  ggtitle("FPS Game Sales in Different Region (Xbox)")
+
+ggplot(df2,aes(year,percent,group=Region))+
+  geom_line(aes(color=Region))+
+  xlab("Year")+
+  ylab("Market Share")+
+  ggtitle("FPS Game Sales in Different Region (Xbox)")
+```
+
+
+```{r}
+# Other platform data has been contains into "file named Video game"
+# Video Game
+# Filter and Pivot table
+
+# Filter the shooting game
+videogame_shooting = videogame %>% filter(Genre=="Shooter")
+head(videogame_shooting)
+
+# Pivot table based on different regions
+
+# Europe
+eu = aggregate(videogame_shooting$EU_Sales, by=list(type=videogame_shooting$Year_of_Release),sum)
+colnames(eu)[2] = "Europe"
+eu
+# North America
+na = aggregate(videogame_shooting$NA_Sales, by=list(type=videogame_shooting$Year_of_Release),sum)
+colnames(na)[2] = "North America"
+na
+# Japan
+jp = aggregate(videogame_shooting$JP_Sales, by=list(type=videogame_shooting$Year_of_Release),sum)
+colnames(jp)[2] = "Japan"
+jp
+# Rest of the world
+other = aggregate(videogame_shooting$Other_Sales, by=list(type=videogame_shooting$Year_of_Release),sum)
+colnames(other)[2] = "Rest of World"
+other
+# Sum
+global = aggregate(videogame_shooting$Global_Sales, by=list(type=videogame_shooting$Year_of_Release),sum)
+colnames(global)[2] = "global"
+global
+
+# Combine all 5 dataframe
+videogamedf = cbind(na,eu[,2],jp[,2],other[,2],global[,2])
+# Rename
+colnames(videogamedf)[3] = "Europe"
+colnames(videogamedf)[4] = "Japan"
+colnames(videogamedf)[5] = "Rest of World"
+colnames(videogamedf)[6] = "global"
+head(videogamedf)
+
+write.table(videogamedf,"other_market_total.csv",row.names=FALSE,col.names=TRUE,sep=",")
+```
+
+```{r}
+df3_0 = read_csv("other_market_share.csv")
+
+# Pivot table based on different regions
+df3 = df3_0 %>%
+  pivot_longer(c("North America","Europe","Japan","Rest of World"), names_to = "Region", values_to = "percent") %>% 
+  filter(Year >= 2003)
+
+head(df3)
+
+# Plot
+ggplot(df3,aes(Year,percent,fill=Region))+
+  geom_col(position = "dodge")+
+  xlab("Year")+
+  ylab("Market Share")+
+  ggtitle("FPS Game Sales in Different Region \n DC&PC&PS2&PSP&PSV&Xone&X360")
+
+ggplot(df3,aes(Year,percent,group=Region))+
+  geom_line(aes(color=Region))+
+  xlab("Year")+
+  ylab("Market Share")+
+  ggtitle("FPS Game Sales in Different Region \n DC&PC&PS2&PSP&PSV&Xone&X360")
+```
+
+
+
+
+
+
+
+
